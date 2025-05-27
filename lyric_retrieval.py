@@ -1,103 +1,69 @@
-{
- "cells": [
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "3cce6d19",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "from lyricsgenius import Genius\n",
-    "import pandas as pd\n",
-    "import os \n",
-    "import requests\n",
-    "import time\n",
-    "from dask.delayed import delayed \n",
-    "import dask\n",
-    "from dask.diagnostics.progress import ProgressBar\n",
-    "import errno\n",
-    "\n",
-    "api_token = os.getenv(\"GENIUS_ACCESS_TOKEN\")\n",
-    "artists = pd.read_csv(\"artist_list.csv\", encoding='latin-1')\n",
-    "\n",
-    "genius = Genius(api_token,\n",
-    "                   skip_non_songs=True, \n",
-    "                   excluded_terms=[\"(Remix)\", \"(Live)\"], \n",
-    "                   remove_section_headers=True, \n",
-    "                   retries=2,\n",
-    "                   timeout=10)\n",
-    "\n",
-    "genius.verbose = False\n",
-    "\n",
-    "\n",
-    "@delayed \n",
-    "def fetch_lyrics(artist, retries=3, max_songs=50): \n",
-    "    while retries > 0:\n",
-    "        try: \n",
-    "            lyrics = genius.search_artist(artist, max_songs=max_songs, get_full_info=False)\n",
-    "            if lyrics: \n",
-    "                lyrics.save_lyrics(f'{artist}_Lyrics', extension='txt', verbose=False)\n",
-    "                return f'Lyrics retrieved for {artist}'\n",
-    "            \n",
-    "            else: \n",
-    "                return f\"No Lyrics retrieved for {artist}\"\n",
-    "        except requests.exceptions.RequestException as e: \n",
-    "            print(f'{e.errno} during retrieval for {artist}.') # error number \n",
-    "            print(f'Message: {e.args[1]}') # Error Message\n",
-    "\n",
-    "            if e.args[1].startswith('5'): \n",
-    "                slp = 3\n",
-    "                print(f'Retrying for {artist} lyrics. Attempt {retries}')\n",
-    "                time.sleep(slp**2)\n",
-    "                lyrics = genius.search_artist(artist, max_songs = max_songs, get_full_info=False)\n",
-    "                lyrics.save_lyrics(f'{artist}_Lyrics', extension='txt', verbose=False)\n",
-    "                retries = retries-1\n",
-    "\n",
-    "            elif errno.ETIMEDOUT: \n",
-    "                print(f'Timeout during retrieval for {artist}')\n",
-    "                time.sleep(3)\n",
-    "                retries = retries-1\n",
-    "                pass\n",
-    "            else: \n",
-    "                retries = retries-1\n",
-    "                pass\n",
-    "    return f'Max tries for {artist} reached.'\n",
-    "    \n",
-    "def main(): \n",
-    "    delayed_results = []\n",
-    "\n",
-    "    for artist in artists['artist_name']: \n",
-    "        observed = fetch_lyrics(artist, retries=5, max_songs=150)\n",
-    "        delayed_results.append(observed)\n",
-    "\n",
-    "    pbar = ProgressBar()\n",
-    "    pbar.register()\n",
-    "    results = dask.compute(*delayed_results)\n",
-    "\n",
-    "if __name__=='__main__':\n",
-    "    main()\n"
-   ]
-  }
- ],
- "metadata": {
-  "kernelspec": {
-   "display_name": "data_analysis",
-   "language": "python",
-   "name": "python3"
-  },
-  "language_info": {
-   "codemirror_mode": {
-    "name": "ipython",
-    "version": 3
-   },
-   "file_extension": ".py",
-   "mimetype": "text/x-python",
-   "name": "python",
-   "nbconvert_exporter": "python",
-   "pygments_lexer": "ipython3",
-   "version": "3.13.2"
-  }
- },
- "nbformat": 4,
- "nbformat_minor": 5
-}
+from lyricsgenius import Genius
+import pandas as pd
+import os 
+import requests
+import time
+from dask.delayed import delayed 
+import dask
+from dask.diagnostics.progress import ProgressBar
+import errno
+
+api_token = os.getenv("GENIUS_ACCESS_TOKEN")
+artists = pd.read_csv("artist_list.csv", encoding='latin-1')
+
+genius = Genius(api_token,
+                   skip_non_songs=True, 
+                   excluded_terms=["(Remix)", "(Live)"], 
+                   remove_section_headers=True, 
+                   retries=2,
+                   timeout=10)
+
+genius.verbose = False
+
+
+@delayed 
+def fetch_lyrics(artist, retries=3, max_songs=50): 
+    while retries > 0:
+        try: 
+            lyrics = genius.search_artist(artist, max_songs=max_songs, get_full_info=False)
+            if lyrics: 
+                lyrics.save_lyrics(f'{artist}_Lyrics', extension='txt', verbose=False)
+                return f'Lyrics retrieved for {artist}'
+            
+            else: 
+                return f"No Lyrics retrieved for {artist}"
+        except requests.exceptions.RequestException as e: 
+            print(f'{e.errno} during retrieval for {artist}.') # error number 
+            print(f'Message: {e.args[1]}') # Error Message
+
+            if e.args[1].startswith('5'): 
+                slp = 3
+                print(f'Retrying for {artist} lyrics. Attempt {retries}')
+                time.sleep(slp**2)
+                lyrics = genius.search_artist(artist, max_songs = max_songs, get_full_info=False)
+                lyrics.save_lyrics(f'{artist}_Lyrics', extension='txt', verbose=False)
+                retries = retries-1
+
+            elif errno.ETIMEDOUT: 
+                print(f'Timeout during retrieval for {artist}')
+                time.sleep(3)
+                retries = retries-1
+                pass
+            else: 
+                retries = retries-1
+                pass
+    return f'Max tries for {artist} reached.'
+    
+def main(): 
+    delayed_results = []
+
+    for artist in artists['artist_name']: 
+        observed = fetch_lyrics(artist, retries=5, max_songs=150)
+        delayed_results.append(observed)
+
+    pbar = ProgressBar()
+    pbar.register()
+    results = dask.compute(*delayed_results)
+
+if __name__=='__main__':
+    main()
