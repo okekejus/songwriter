@@ -5,26 +5,24 @@ import os
 from tqdm import tqdm
 import glob
 
-def clean_text(txt_file): 
-    txt_file = re.sub(r"\[Song \d+: .+", '--next song--', txt_file)  # need some kind of separator for each song, I like this better 
-    txt_file = re.sub(r'.+\xa0', '',txt_file) # pesky space character 
-    txt_file = re.sub(r'\d+ Contributors.+', '', txt_file) # removal of the first line of text after song, beginning of annotations.
-    txt_file = re.sub(r'.+ ...Read More.+', '', txt_file) # removing the 'Read More' section of the annotations.
-    txt_file = re.sub(r'.+ ...Read More.+\s ', '', txt_file)
-    txt_file = re.sub(r'.+ ...Read More\s', '', txt_file)
-    txt_file = re.sub(r'\[Verse \d.+', '', txt_file) # sometimes these appear, will likely have to do so for Chorus
-    txt_file = re.sub(r'Verse-\d', '', txt_file)  
-    txt_file = re.sub(r'Chorus', '', txt_file)  
-    txt_file = re.sub(r'Intro', '', txt_file)  
-    txt_file = re.sub(r'Outro', '', txt_file)  
+
+def clean_text(txt_file, pairs): 
+    ''' Accepts dict of patterns and replacement, applies transformation to input (body of text)'''
+    for pattern, repl in pairs.items(): 
+        try: 
+            txt_file = re.sub(pattern, repl, txt_file)   
+        except Exception as e: 
+            print(f'Error during replacement for {pattern} in {txt_file}')
+            pass
+
     return txt_file
 
-def main(): 
+def main(files, pairs): 
 
     for file in tqdm(files, desc='Cleaning + Dumping ...'):
         try: 
             with open(file, 'r', encoding='utf8') as f: 
-                cleaned = clean_text(f.read())
+                cleaned = clean_text(f.read(), pairs=pairs)
                 box.append(cleaned)
                 f.close()
 
@@ -39,10 +37,30 @@ def main():
             pass # skip loop.
 
 if __name__ == '__main__':
+
+    patterns = {r"\[Song \d+: .+": '--next song--',
+            r'.+\xa0': '', 
+            r'\d+ Contributors.+': '', 
+            r'.+ ...Read More.+': '', 
+            r'.+ ...Read More.+\s ': '', 
+            r'.+ ...Read More\s': '', 
+            r'\[Verse \d.+': '', 
+            r'Verse-\d': '',
+            r'Chorus': '', 
+            r'Intro' : '',
+            r'Outro' : ''}
+    
     files = glob.glob('data/lyrics/*.txt')
     box = []
-    n = open('data/lyrics/all_lyrics.txt', 'x')
-    main()
+    path_name = 'data/lyrics/all_lyrics.txt'
+
+    if os.path.exists(path_name): 
+        os.remove(path_name)
+        open(path_name, 'x')
+        main(files, pairs=patterns)
+    else: 
+        open(path_name, 'x')
+        main(files, pairs=patterns)
     
 
 
