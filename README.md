@@ -4,7 +4,7 @@ Song writing is a mystery to me - being able to find the right words that match 
 This is not/will not be used in any commercial capacity, I simply want to find out if I can train a model to make somewhat coherent text. 
 
 ## Fetching Training Data 
-I repurposed the script from my [lyric analysis](https://github.com/okekejus/lyric_analysis) project, using it to fetch the lyrics of 53 artists. I decided to download 150 songs per artist to begin the training set. 
+I repurposed the script from my [lyric analysis](https://github.com/okekejus/lyric-analysis) project, using it to fetch the lyrics of 53 artists. I decided to download 150 songs per artist to begin the training set. 
 
 A function `fetch_lyrics(artist, retries, max_songs)` gathers and saves the lyrics for each artist in the list, using the `lyricsgenius` library. I delayed this function using `dask.delayed`, which sped up its run time from over an hour to 21 minutes. The full code is available in lyric_retrieval.py.
 

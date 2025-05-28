@@ -18,7 +18,7 @@ def clean_text(txt_file, pairs):
     return txt_file
 
 def main(files, pairs): 
-
+    box = []
     for file in tqdm(files, desc='Cleaning + Dumping ...'):
         try: 
             with open(file, 'r', encoding='utf8') as f: 
@@ -51,7 +51,7 @@ if __name__ == '__main__':
             r'Outro' : ''}
     
     files = glob.glob('data/lyrics/*.txt')
-    box = []
+   
     path_name = 'data/lyrics/all_lyrics.txt'
 
     if os.path.exists(path_name): 
