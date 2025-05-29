@@ -10,7 +10,7 @@ A function `fetch_lyrics(artist, retries, max_songs)` gathers and saves the lyri
 
 
 ## Data Cleaning
-The retrieved lyrics were already relatively clean thanks to the `lyricsgenius` library. Each song came with a header (Song 1, Song 2, etc.), as well as a truncated version of the song's description, taken from the Genius webpage. These are not needed in the model, so I created the function `clean_text(text)` to take care of all unwanted labellings/headers. The result is one text file with 150 songs per artist, each song separated by a "--next song--" marker. 
+The retrieved lyrics were already relatively clean thanks to the `lyricsgenius` library. Each song came with a header (Song 1, Song 2, etc.), as well as a truncated version of the song's description, taken from the Genius webpage. These are not needed in the model, so I created the function `clean_text(txt_file, pairs)` which accepts text and a dict of pattern/replacement pairs. The function applies each replacement to each pattern found within the text. The result is one text file with 150 songs per artist, each song separated by a "--next song--" marker. 
 
 ## Data Preprocessing
 - figure out how to train model using both structured lyrics + vocab from other places so it is not just limited to the songs. 
